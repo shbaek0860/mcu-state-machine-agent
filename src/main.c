@@ -22,15 +22,26 @@ int main(void) {
     // 1. 상태 머신 초기화
     HeaterFSM_Init(&g_heater_ctx);
     
-    // 2. 가열 시작 이벤트 발생
+    // [시나리오 1] 정상 작동 사이클
+    printf("\n--- [Scenario 1] Normal Operation Cycle ---\n");
     printf("-> Sending EVENT_START\n");
     HeaterFSM_ProcessEvent(&g_heater_ctx, EVENT_START);
     
-    // 3. 하드웨어 타이머/인터럽트 발생 모의
+    printf("-> Sending EVENT_TEMP_REACHED\n");
+    HeaterFSM_ProcessEvent(&g_heater_ctx, EVENT_TEMP_REACHED);
+    
+    printf("-> Sending EVENT_STOP\n");
+    HeaterFSM_ProcessEvent(&g_heater_ctx, EVENT_STOP);
+
+    // [시나리오 2] 인터럽트/에러 발생 사이클
+    printf("\n--- [Scenario 2] ISR Error Handling ---\n");
+    printf("-> Sending EVENT_START\n");
+    HeaterFSM_ProcessEvent(&g_heater_ctx, EVENT_START);
+    
     printf("-> Hardware Triggering Timer_ISR_Mock (Overheat)\n");
     Timer_ISR_Mock();
     
-    // 4. 메인 루프에서 ISR 이벤트 처리 (실제 환경에서는 인터럽트 플래그 확인)
+    // 메인 루프에서 ISR 이벤트 처리 (실제 환경에서는 인터럽트 플래그 확인)
     if (g_isr_event != EVENT_NONE) {
         printf("-> Processing ISR Event: %d\n", g_isr_event);
         HeaterFSM_ProcessEvent(&g_heater_ctx, g_isr_event);
@@ -39,8 +50,8 @@ int main(void) {
         g_isr_event = EVENT_NONE;
     }
     
-    // 5. 최종 상태 출력 (STATE_ERROR 이어야 함)
-    printf("-> Final State: %d\n", g_heater_ctx.current_state);
+    // 최종 상태 출력 (STATE_ERROR 이어야 함)
+    printf("-> Final State: %d (Expected: %d)\n", g_heater_ctx.current_state, STATE_ERROR);
     
     return 0;
 }
